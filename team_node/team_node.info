@@ -1,0 +1,7 @@
+name = team_node
+description = Create a Node for each team we create
+package = bbl
+core = 7.x
+dependencies[] = image
+;files[] = team_node.test
+

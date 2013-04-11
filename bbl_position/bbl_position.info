@@ -1,0 +1,7 @@
+name = bbl_position
+description = Create a Node for each player position
+package = bbl
+core = 7.x
+dependencies[] = image
+;files[] = bbl_position.test
+

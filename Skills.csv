@@ -1,0 +1,60 @@
+Skill,Category
+Block,G
+Dauntless,G
+Dirty Player,G
+Fend,G
+Frenzy,G
+Kick,G
+Kick-Off Return,G
+Pass Block,G
+Pro,G
+Shadowing,G
+Strip Ball,G
+Sure Hands,G
+Tackle,G
+Wrestle,G
+Catch,A
+Diving Catch,A
+Diving Tackle,A
+Dodge,A
+Jump Up,A
+Leap,A
+Side Step,A
+Sneaky Git,A
+Sprint,A
+Sure Feet,A
+Break Tackle,S
+Grab,S
+Guard,S
+Juggernaut,S
+Mighty Blow,S
+Multiple Block,S
+Piling On,S
+Stand Firm,S
+Strong Arm,S
+Thick Skull,S
+Accurate,P
+Dump-Off,P
+Hail Mary Pass,P
+Leader,P
+Nerves of Steel,P
+Pass,P
+Safe Throw,P
+Big Hand,M
+Claw(s),M
+Disturbing Presence,M
+Extra Arms,M
+Foul Appearance,M
+Horns,M
+Prehensile Tail,M
+Tentacles,M
+Two Heads,M
+Very Long Legs,M
+MA+,X
+AV+,X
+AG+,X
+ST+,X
+MA-,I
+AV-,I
+AG-,I
+ST-,I

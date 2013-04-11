@@ -1,0 +1,382 @@
+<?php
+
+/**
+ * @file
+ * Base module file for the 'bbl' module
+ *
+ * This module is for basic testing of code 
+ */
+
+// ********************************************************
+// *                                                      *
+// *                Module Help Function                  *
+// *                                                      *
+// ********************************************************
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   A Drupal menu router path the help is being requested.
+ * @param $arg
+ *   An array that corresponds to the return of the arg() function.
+ *
+ * @return
+ *   A localized string containing the help text.
+ */
+function bbl_help($path, $arg) {
+  $help = '';
+  switch ($path) {
+    case "admin/help#bbl":
+      $help = t("This module is for basic code testing.");
+      break;
+  }
+  if (!empty($help)) {
+    return '<p>' . $help . '</p>';
+  }
+  return $help;
+}
+
+/**
+ * Page callback for our general info page.
+ */
+function bbl_intro() {
+  $markup = t('Blood Bowl League Manager software.');
+  return array('#markup' => $markup);
+}
+
+/**
+ * Implements hook_menu().
+ *
+ * Here we set up the URLs (menu entries) for the
+ * form examples. Note that most of the menu items
+ * have page callbacks and page arguments set, with
+ * page arguments set to be functions in external files.
+ */
+function bbl_menu() {
+  $items = array();
+  $items['bbl'] = array(
+    'title' => 'Blood Bowl League Manager',
+    'page callback' => 'bbl_intro',
+    'access callback' => TRUE,
+    'expanded' => TRUE,
+  );
+  $items['bbl/ViewTeams'] = array(
+    'title' => 'View Teams Table',
+    'page callback' => 'bbl_view_team',
+    'access callback' => TRUE,
+    'description' => 'View Teams table',
+  );
+  $items['bbl/LoadSkills'] = array(
+    'title' => 'Load Skills data',
+    'page callback' => 'bbl_load_skill_data',
+    'access callback' => TRUE,
+    'description' => 'Load skills data',
+  );
+  $items['bbl/ViewPlayers'] = array(
+    'title' => 'View Player Table',
+    'page callback' => 'bbl_view_players_table',
+    'access callback' => TRUE,
+    'description' => 'View players table',
+  );
+  $items['bbl/CreateTeam'] = array(
+    'title' => 'Create New Team',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_create_team_1'),
+    'access callback' => TRUE,
+    'description' => 'Create New Roster',
+    'file' => 'CreateTeam.inc',
+  );
+  $items['createteam'] = array(
+    'title' => 'Create New Team B',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_create_team_1'),
+    'access callback' => 'user_access',
+    'access arguments' => array('create team_node content'),
+    'description' => 'Create New Roster',
+    'file' => 'CreateTeam.inc',
+  );
+  $items['bbl/admin'] = array(
+    'title' => 'League Administration',
+    'page callback' => 'bbl_admin_page',
+    'access callback' => TRUE,
+    'description' => 'League Administration',
+    'file' => 'bbl_admin.inc',
+  );
+  $items['bbl/awardspp'] = array(
+    'title' => 'Award team SPP B',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_admin_award_SPP_1'),
+    'access callback' => TRUE,
+    'description' => "Award SPP's to team",
+    'file' => 'bbl_admin.inc',
+  );
+  $items['bbl/%/award'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Award team SPP',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_admin_award_spp', 1),
+    'access callback' => 'user_access',
+    'access arguments' => array('edit own team_node content', 'edit any team_node content'),
+    //'description' => "Award SPP's to team",
+    'file' => 'bbl_admin.inc',
+  );
+  $items['bbl/%/purchase'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Buy players',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_purchase_roster', 1),
+    'access callback' => TRUE,
+    'file' => 'bbl_admin.inc',
+  );
+  $items['bbl/%/sort'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Sort and name players',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bbl_name_and_sort', 1),
+    'access callback' => TRUE,
+    'file' => 'NameAndSort.inc',
+  );
+  return $items;
+}
+
+/*
+ * Create the skills table within the mysql database
+ */
+function bbl_view_team() {
+  
+  $header = array(
+    // The header gives the table the information it needs in order to make
+    // the query calls for ordering. TableSort uses the field information
+    // to know what database column to sort by.
+    array('data' => t('Team Names'), 'field' => 't.teamname'),
+    array('data' => t('Reroll cost'), 'field' => 't.reroll'),
+  );
+
+  $build = skills_table_test_page('bbl_rs_teams', $header);
+  return $build;
+}
+
+/*
+ * Load the skills data into the skills table within the mysql database
+ */
+function bbl_load_skill_data() {
+  
+  $header = array(
+    // The header gives the table the information it needs in order to make
+    // the query calls for ordering. TableSort uses the field information
+    // to know what database column to sort by.
+    array('data' => t('Skill Names'), 'field' => 't.Skill'),
+    array('data' => t('Categories'), 'field' => 't.Category'),
+  );
+
+  $build = skills_table_test_page('bbl_rs_skills', $header);
+  return $build;
+}
+
+/*
+ * Load the skills data into the skills table within the mysql database
+ * 
+ * TODO - fix as new DB fields have broken code
+ */
+function bbl_view_players_table() {
+   
+  $header = array(
+    // The header gives the table the information it needs in order to make
+    // the query calls for ordering. TableSort uses the field information
+    // to know what database column to sort by.
+    array('data' => t('Player ID'), 'field' => 't.dpid'),
+    array('data' => t('Ruleset ID'), 'field' => 't.ruleset_id'),
+    array('data' => t('Player Type'), 'field' => 't.race'),
+    array('data' => t('tid'), 'field' => 't.tid'),
+    array('data' => t('Limit'), 'field' => 't.max'),
+    array('data' => t('Position'), 'field' => 't.position'),
+    array('data' => t('MA'), 'field' => 't.MA'),
+    array('data' => t('ST'), 'field' => 't.ST'),
+    array('data' => t('AG'), 'field' => 't.AG'),
+    array('data' => t('AV'), 'field' => 't.AV'),
+    array('data' => t('Base Skills'), 'field' => 't.skills'),
+    array('data' => t('Normal Skills'), 'field' => 't.norm'),
+    array('data' => t('Double Skills'), 'field' => 't.dble'),
+    array('data' => t('Player Cost'), 'field' => 't.cost'),
+  );
+
+  $build = skills_table_test_page('bbl_rs_players', $header);
+  return $build;
+}
+
+function skills_table_test_page($source_table, $header) {
+  // We are going to output the results in a table with a nice header.
+//  $header = array(
+//    // The header gives the table the information it needs in order to make
+//    // the query calls for ordering. TableSort uses the field information
+//    // to know what database column to sort by.
+//    array('data' => t('Skill Names'), 'field' => 't.Skill'),
+//    array('data' => t('Categories'), 'field' => 't.Category'),
+//  );
+
+  $query = db_select($source_table, 't')
+    ->extend('TableSort'); // Using the TableSort Extender is what tells the
+                           // the query object that we are sorting.
+  $query->fields('t');
+
+  $result = $query
+    ->orderByHeader($header) // Don't forget to tell the query object how to
+                             // find the header information.
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    // normally we would add some nice formatting to our rows
+    // but for our purpose we are simply going to add our row
+    // to the array.
+    $rows[] = array('data' => (array) $row);
+  }
+  
+  // build the table for the nice output.
+  $build['tablesort_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+
+  return $build;
+}
+
+/*
+ * This form allows a league commissioner to create derivative rulesets. New 
+ * rulesets are created by using an existing ruleset as a template.
+ * 
+ * Access to this form should be limited to the administrator and league 
+ * commissioner.
+ */
+function bbl_create_new_ruleset($form, &$form_state) {
+  
+  $query = db_select('bbl_ruleset', 't');
+  $query->fields('t', array('ruleset_id','ruleset_name'))->orderBy('ruleset_name');
+  $result = $query->execute();
+  
+  $rulesetresults = $result->fetchAll();
+  $rulesetlist = array();
+  
+  foreach($rulesetresults as $ruleset) {
+    $rulesetlist[$ruleset->ruleset_id] = $ruleset->ruleset_name;
+  }
+  
+  $form['description'] = array(
+    '#type' => 'item',
+    '#title' => t('Create new ruleset'),
+  );
+
+  $form['ruleset_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Ruleset name'),
+    '#description' => t('Please enter a name for this new ruleset.'),
+    '#size' => 20,
+    '#maxlength' => 60,
+    '#required' => TRUE,
+    '#default_value' => '',
+  );
+  $form['existing_rulesets'] = array(
+    '#type' => 'select',
+    '#title' => t('Select an existing ruleset to use as a template for the new ruleset.'),
+    '#options' => $rulesetlist,
+    '#default_value' => '',
+    '#description' => t('Select an existing ruleset to use as a template for the new ruleset.'),
+  );
+  $form['next'] = array(
+    '#type' => 'submit',
+    '#value' => t('Next >>'),
+    '#submit' => array('bbl_create_new_ruleset_submit'),
+    '#validate' => array('bbl_create_new_ruleset_validate'),
+  );
+  
+  return $form;
+}
+
+/*
+ * TODO - insert the new ruleset name into the ruleset_table and then use the
+ * new ruleset_id to create a copy of ruleset data with a new ruleset_id. Tables
+ * to be effected are
+ * 
+ * Players, Skills, Teams, starplayers, starplayer_availability, experience, 
+ * rules, improvement values
+ */
+function bbl_create_new_ruleset_submit($form, &$form_state) {
+  
+  // add to ruleset table and get new ruleset_id
+  $target_table = 'ruleset_table';
+  $fields = array();
+  $fields['ruleset_name'] = check_plain($form_state['values']['ruleset_name']);
+  $fields['creator'] = $GLOBALS['user']->uid;
+  $fields['created'] = $_SERVER['REQUEST_TIME'];
+  
+  if (db_table_exists($target_table)) {
+    $new_rid = db_insert($target_table)->fields($fields)->execute();
+  }
+  
+  $old_rid = $form_state['values']['existing_rulesets'];
+  
+//  $query = db_select('bbl_rs_teams', 't')->fields('t', array('teamname', 'reroll'));
+//  $query->condition('ruleset_id', $old_ruleset_id, '=');
+//  $result = $query->execute();
+//  
+//  $teamData = $result->fetchAll();
+//  $rows = array();
+//  
+//  foreach($teamData as $td) {
+//    $row[] = array(
+//      'ruleset_id' => $new_ruleset_id,
+//      'teamname' => $td['teamname'],
+//      'reroll' => $td['reroll'],
+//    );
+//  }
+//  db_insert('bbl_rs_teams')->fields($row)->execute();
+  // TODO - test that this code works
+  make_ruleset_copy($old_rid, $new_rid, 'bbl_rs_teams', array('teamname', 'reroll'));
+  make_ruleset_copy($old_rid, $new_rid, 'bbl_rs_skills', array('skill', 'category'));
+  
+}
+/*
+ * TODO -  confirm unique name
+ */
+function bbl_create_new_ruleset_validate($form, &$form_state) {
+  
+}
+
+function bbl_theme() {
+  return array(
+    // Theme function 
+    'bbl_create_team_1' => array(
+      'render element' => 'form',
+      'file' => 'CreateTeam.inc',
+    ),
+    'bbl_admin_award_SPP_1' => array(
+      'render element' => 'form',
+      'file' => 'bbl_admin.inc',
+    ),
+    'bbl_admin_award_spp' => array(
+      'render element' => 'form',
+      'file' => 'bbl_admin.inc',
+    ),
+    'bbl_name_and_sort' => array(
+      'render element' => 'form',
+      'file' => 'NameAndSort.inc',
+    ),
+  );
+}
+
+function make_ruleset_copy($old_rid, $new_rid, $table_name, $fieldarray) {
+  
+  $query = db_select($table_name, 't')->fields('t', $fieldarray);
+  $query->condition('ruleset_id', $old_rid, '=');
+  $result = $query->execute();
+  
+  while ($row = $result->fetchAssoc()) {
+    array_push($row, array('ruleset_id' => $new_rid));
+    
+    db_insert($table_name)->fields($row)->execute();
+  }
+  
+}
+

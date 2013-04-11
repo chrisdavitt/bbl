@@ -1,0 +1,379 @@
+<?php
+
+/**
+ * @file
+ * Module file for bbl bbl_position.
+ */
+
+/**
+ * @defgroup node_example Example: Node
+ * @ingroup examples
+ * @{
+ * Example defining a node type in code.
+ *
+ * This is an example outlining how a module can be used to define a new
+ * node type. Our example node type will allow users to specify multiple
+ * "colors", a "quantity" and an "image" for their nodes; some kind of
+ * rudimentary inventory-tracking system, perhaps?
+ *
+ * The basic pattern for defining a node type is to tell Drupal about the
+ * node's field types, and view modes. Drupal will then take over and manage
+ * the storage for this node type. This differs from Drupal 6, where we
+ * would have to handle all the database storage ourselves in the module.
+ *
+ * Remember that most node types do not require any custom code, as one
+ * simply creates them using the Drupal user interface. Creating a node like
+ * this in code is a special case.
+ *
+ * Since we only have to define our node type once, most of the code
+ * required to do this is moved to the node type's .install file.
+ * Drupal 7 has us defining most of our node structure in arrays,
+ * and passing those to node_type_save(). We use hook_install() as
+ * a convenient place to define these types, and hook_uninstall()
+ * as a convenient place to not only uninstall the data contained
+ * in these nodes, but also remove the node types from Drupal's
+ * knowledge.
+ *
+ * In previous versions of Drupal, "teaser" and "page" were node view modes.
+ * In Drupal 7 we can define custom view modes to let the node know how it
+ * should return it's data.  This module declares a custom view mode called
+ * "example_node_list".
+ *
+ * Consult the @link http://drupal.org/node/707832 Field API Tutorial @endlink
+ * and @link http://drupal.org/node/443536 Field API Handbook Page @endlink
+ * and @link field Field API documentation @endlink.
+ *
+ * @see node_example.install
+ * @see field_example.module
+ */
+
+/**
+ * Implements hook_menu().
+ *
+ * We are providing a default page to illustrate the use of our custom node view
+ * mode that will live at http://example.com/?q=examples/node_example
+ */
+function bbl_position_menu() {
+  // BUG - does this menu node get created if the bbl node has not been installed?
+  $items['bbl/bbl_position'] = array(
+    'page callback' => 'bbl_position_page',
+    'access arguments' => array('access content'),
+    'title' => 'Team Node',
+  );
+  return $items;
+}
+
+/**
+ * Callback that builds our content and returns it to the browser.
+ *
+ * This callback comes from hook_menu().
+ *
+ * @return
+ *   a build array
+ *   a renderable array showing a list of our nodes.
+ *
+ * @see node_load()
+ * @see node_view()
+ * @see node_example_field_formatter_view()
+ */
+function bbl_position_page() {
+  // We'll start building a renderable array that will be our page.
+  // For now we just declare the array.
+  $renderable_array = array();
+  // We query the database and find all of the nodes for the type we defined.
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type AND n.status = :status';
+  $result = db_query($sql,
+    array(
+      ':type' => 'bbl_position',
+      ':status' => 1,
+    )
+  );
+  $renderable_array['explanation'] = array(
+    '#markup' => t("Lists all Team Nodes currently in the system."),
+    );
+  // Loop through each of our node_example nodes and instruct node_view
+  // to use our "example_node_list" view.
+  // http://api.drupal.org/api/function/node_load/7
+  // http://api.drupal.org/api/function/node_view/7
+  foreach ($result as $row) {
+    $node = node_load($row->nid);
+    $renderable_array['node_list'][]= node_view($node, 'bbl_position_list');
+  }
+  return $renderable_array;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * We need to modify the default node entity info by adding a new view mode to
+ * be used in functions like node_view() or node_build_content().
+ */
+function bbl_position_entity_info_alter(&$entity_info) {
+  // Add our new view mode to the list of view modes...
+  $entity_info['node']['view modes']['bbl_position_list'] = array(
+    'label' => t('Team Node List'),
+    'custom settings' => TRUE,
+  );
+}
+
+/**
+ * Implements hook_node_view()
+ */
+function bbl_position_node_view($node, $view_mode, $langcode) {
+  // Add the team roster and other team details to the team node
+  
+  // TODO - check user id before displaying editing links
+  //drupal_set_message(t('node type check to be added here <pre>@node</pre>', array('@node' => print_r($node, TRUE))));
+  // http://api.drupal.org/api/drupal/includes!theme.inc/function/theme_table/7
+  if ($view_mode == 'full' && $node->type == 'bbl_position') { 
+    // TODO - add keys to these header arrays for identification 
+    // also we can then add a tpid column and remove it before theming
+    // $header = array(
+      // 'tpid' => array('data' => t('tpid'), 'field' => 'st.tpid'),
+      // 'playernumber' => array('data' => t('No'), 'field' => 'st.playernumber'),
+      // 'playername' => array('data' => t('Player Name'), 'field' => 'st.playername'),
+      // 'Position' => array('data' => t('Position'), 'field' => 'pl.Position'),
+      // 'MA' => array('data' => t('MA'), 'field' => 'pl.MA'),
+      // 'ST' => array('data' => t('ST'), 'field' => 'pl.ST'),
+      // 'AG' => array('data' => t('AG'), 'field' => 'pl.AG'),
+      // 'AV' => array('data' => t('AV'), 'field' => 'pl.AV'),
+      // 'Skills' => array('data' => t('Base Skills'), 'field' => 'pl.skills'),
+      // 'SPP' => array('data' => t('SPP'), 'field' => 'st.SPP'),
+      // 'cost' => array('data' => t('Cost'), 'field' => 'pl.cost'),
+    // );
+
+    // $query = db_select('bbl_user_players', 'st');
+    // foreach ($header as $value) {
+      // $column = explode('.', $value['field']);
+      // $query->addField($column[0], $column[1]);
+    // }
+    // $query->join('bbl_rs_players', 'pl', 'st.playertype = pl.dpid');
+    // $query->join('bbl_user_roster', 'tt', 'tt.team_id = st.teamid');
+    // $query->condition('tt.team_node_id', $node->nid, '=');
+    // $query->condition('st.playerstate', array(0,2), 'IN');  // do not display dead or retired players
+    // $query->orderby('weight');
+    // $result = $query->execute();
+
+    // $rows = array();
+    // foreach ($result as $row) {
+      // $arrayrow = (array) $row;
+      // $rows[$row->tpid] = array('data' => $arrayrow);
+    // }
+    
+	// $rows = add_skills_data($node->nid, $rows);
+	
+    // $node->content['team_roster'] = array(
+      // '#theme' => 'table', 
+      // '#weight' => 10, 
+      // '#header' => $header,
+      // '#rows' => $rows,
+    // );
+    
+    // $query = db_select('bbl_user_roster', 'r');
+    // $query->fields('r');
+    // $result_roster = $query->condition('team_node_id', $node->nid, '=')->execute();
+    
+    // //drupal_set_message(t('<pre>@data</pre>', array('@data' => print_r($result_roster, TRUE))));
+    
+    // $data = $result_roster->fetch();
+    // $teamdata = array(
+      // '@rr' => $data->rerolls,
+      // '@cl' => $data->cheerleaders,
+      // '@ac' => $data->assistantcoaches,
+      // '@ap' => $data->apothecary,
+      // '@ff' => $data->fanfactor,
+      // '@gold' => number_format($data->treasury),
+    // );
+    
+    // $markup = t('<b>Team rerolls:</b> @rr <b>Cheerleaders:</b> @cl <b>Assistant Coaches:</b> @ac <b>Apothecary:</b> @ap <b>Fan Factor:</b> @ff <b>Treasury:</b> @goldgold', $teamdata);
+    // $node->content['team_extras'] = array(
+      // '#markup' => $markup,
+      // '#weight' => 11,
+    // );
+    
+    // $node->content['edit_spp'] = array(
+      // '#markup' => l('Award spp' ,'bbl/' . $node->nid . '/award'),
+      // '#weight' => 13,
+    // );
+    
+    // $node->content['name_and_sort'] = array(
+      // '#markup' => l('Name and reorganise roster' ,'bbl/' . $node->nid . '/sort'),
+      // '#weight' => 15,
+    // );
+  // //'bbl_position_image'
+  // }
+}
+
+/*
+*   bbl_position_node_view_alter
+*
+*   move the body text lower down the page.
+*/
+function bbl_position_node_view_alter(&$build) {
+  if ($build['#view_mode'] == 'full') {
+    // Change its weight.
+    $build['body']['#weight'] = 20;
+  }
+
+  // Add a #post_render callback to act on the rendered HTML of the node.
+  //$build['#post_render'][] = 'my_module_node_post_render';
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+//function node_example_field_formatter_info() {
+//  return array(
+//    'node_example_colors' => array(
+//      'label' => t('Node Example Color Handle'),
+//      'field types' => array('text'),
+//    ),
+//  );
+//}
+
+/**
+ * Implements hook_field_formatter_view().
+ *
+ * @todo: We need to provide a formatter for the colors that a user is allowed
+ * to enter during node creation.
+ */
+//function node_example_field_formatter_view($object_type, $object, $field, $instance, $langcode, $items, $display) {
+//  $element = array();
+//  switch ($display['type']) {
+//    case 'node_example_colors':
+//      foreach ($items as $delta => $item) {
+//        $element[$delta]['#type'] = 'markup';
+//        $color = $item['safe_value'];
+//        $element[$delta]['#markup'] = theme('example_node_color', array('color' => $color));
+//      }
+//      break;
+//  }
+//
+//  return $element;
+//}
+
+/**
+ * Implements hook_theme().
+ *
+ * This lets us tell Drupal about our theme functions and their arguments.
+ */
+//function node_example_theme($existing, $type, $theme, $path) {
+//  return array(
+//    'example_node_color' => array(
+//      'variables' => array('color' => NULL),
+//    ),
+//  );
+//}
+
+/**
+ * Implements hook_help().
+ */
+function bbl_position_help($path, $arg) {
+  switch ($path) {
+    case 'bbl/team_example':
+      return "<p>" . t("The Node Example module provides a custom node type.
+        You can create new Example Node nodes using the <a href='!nodeadd'>node add form</a>.",
+        array('!nodeadd' => url('node/add/team-node'))) . "</p>";
+  }
+}
+
+/**
+ * A custom theme function.
+ *
+ * By using this function to format our node-specific information, themes
+ * can override this presentation if they wish.  This is a simplifed theme
+ * function purely for illustrative purposes.
+ */
+//function theme_example_node_color($variables) {
+//  $output = '<span style="background-color: #ccc; padding: 1em; margin-bottom: 1em; float: left; color: ' . $variables['color'] . '">' . $variables['color'] . '</span>';
+//  return $output;
+//}
+/**
+ * @} End of "defgroup node_example".
+ */
+
+// function add_skills_data($node_id, $roster) {
+  
+  // // query bbl_user_player_skills for this team_node_id
+  // $result = db_query('SELECT psk.tpid, psk.sid, skill_value, skill_type, COALESCE(skill, \'New Skill\') AS skill, category, rp.norm, rp.dble, rp.cost  
+  // FROM bbl_user_players AS st 
+    // INNER JOIN bbl_user_player_skills AS psk ON st.tpid = psk.tpid 
+    // INNER JOIN bbl_user_roster AS tt ON tt.team_id = st.teamid 
+    // INNER JOIN bbl_rs_players as rp ON st.playertype = rp.dpid
+	// LEFT JOIN bbl_rs_skills AS rsk ON psk.sid = rsk.sid 
+    // WHERE (tt.team_node_id = :team_node_id) ORDER BY psk.tpid, psk.sid',array(':team_node_id' => $node_id));
+  
+  // $rows = array();
+  // $result_roster = array();
+  // $statup = array('MA+' => 30000, 'AV+' => 30000, 'AG+' => 40000, 'ST+' => 50000);
+  // foreach ($result as $skill) {
+    // $rows[] = (array) $skill;
+  // }
+  
+  // //loop through all players
+  // foreach ($roster as $player) {
+    // //drupal_set_message(t('<pre>@data</pre>', array('@data' => print_r($player, TRUE))));
+    
+    // $tpid = $player['data']['tpid'];
+	  // $skill_string = $player['data']['skills'];
+    // $value = $player['data']['cost'];
+    
+	// // now loop through each skill
+	// foreach ($rows as $skill) {
+	  // if ($skill['tpid'] == $tpid) {
+        // $sktxt = $skill['skill'];
+        // //drupal_set_message(t('<pre>@data</pre>', array('@data' => print_r($player['data'], TRUE),'@cat' => print_r($skill, TRUE))));
+        // // Normal skill
+        // if (strpos($skill['norm'], $skill['category']) !== FALSE) {
+          // $value += 20000;
+          // $sktxt = '<i>' . $sktxt . '</i>';
+        // }
+        // // double skill
+        // if (strpos($skill['dble'], $skill['category']) !== FALSE) {
+          // $value += 30000;
+          // $sktxt = '<b>' . $sktxt . '</b>';
+        // }
+        // // stat up
+        // if ($skill['category'] == 'X') {
+          // $attrib = substr($sktxt, 0, 2);
+          
+          // if (key($player['data'][$attrib]) == 'data') {
+            // // if key exists
+            // $player['data'][$attrib]['data'] += 1;
+          // }
+          // else
+          // {
+            // $player['data'][$attrib] = array('data' => $player['data'][$attrib] + 1, 'class' => 'statup');
+          // }
+          // $value += $statup[$attrib];
+        // }
+        // // injury
+        // if ($skill['category'] == 'I') {
+          // $attrib = substr($sktxt, 0, 2);
+          // if (key($player['data'][$attrib]) == 'data') {
+            // $player['data'][$attrib]['data'] -= 1;
+          // }
+          // else
+          // {
+            // $player['data'][$attrib] = array('data' => $player['data'][$attrib] - 1, 'class' => 'statdown');
+          // }
+        // }
+        // // Finally concatenate the skill string
+        // if (strlen($skill_string) > 0) {
+          // $skill_string .= ', ' . $sktxt;
+        // }
+        // else
+        // {
+          // $skill_string = $sktxt;
+        // }
+	  // }
+	// }
+    // $player['data']['skills'] = $skill_string;
+    // $player['data']['cost'] = $value;
+    // $result_roster[] = $player;
+  // }
+  
+  // //drupal_set_message(t('<pre>@data</pre>', array('@data' => print_r($result_roster, TRUE))));
+  
+  // return $result_roster;
+// }

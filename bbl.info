@@ -1,0 +1,5 @@
+name = bbl
+description = Blood Bowl League manager module
+package = bbl
+core = 7.x
+scripts[] = my_test.js

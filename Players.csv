@@ -1,0 +1,106 @@
+race,max,position,ma,st,ag,av,skills,norm,dble,cost
+Amazon,16,Linewoman,6,3,3,7,Dodge,G,A S P,50000
+Amazon,2,Thrower,6,3,3,7,"Dodge, Pass",G P ,A S,70000
+Amazon,2,Catcher,6,3,3,7,"Dodge, Catch",G A,S P,70000
+Amazon,4,Blitzer,6,3,3,7,"Dodge, Block",G S,A P,90000
+Chaos,16,Beastman,6,3,3,8,Horns,G S M,A P,60000
+Chaos,4,Chaos Warrior,5,4,3,9,,G S M,A P,100000
+Chaos,1,Minotaur,5,5,2,8,"Loner, Frenzy, Horns, Mighty Blow, Thick Skull, Wild Animal",S M ,G A P,150000
+Chaos Dwarf,16,Hobgoblin,6,3,3,7,,G,A S P,40000
+Chaos Dwarf,6,Chaos Dwarf,4,3,2,9,"Block, Tackle, Thick Skull",G S,A P M,70000
+Chaos Dwarf,2,Bull Centaur,6,4,2,9,"Sprint, Sure Feet, Thick Skull",G S,A P,130000
+Chaos Dwarf,1,Minotaur,5,5,2,8,"Loner, Frenzy, Horns, Mighty Blow, Thick Skull, Wild Animal",S,G A P M,150000
+Chaos Pact,12,Marauder,6,3,3,8,,G S P M,A,50000
+Chaos Pact,1,Goblin Renegade,6,2,3,7,"Animosity, Dodge, Stunty, Right Stuff",A M,G S P,40000
+Chaos Pact,1,Skaven Renegade,7,3,3,7,Animosity,G M,A S P,50000
+Chaos Pact,1,Dark Elf Renegade,6,3,4,8,Animosity,G A M,S P,70000
+Chaos Pact,1,Chaos Troll,4,5,1,9,"Loner, Mighty Blow, Regeneration, Really Stupid, Always Hungry, Throw Teammate",S,G A P M,110000
+Chaos Pact,1,Chaos Orge,5,5,2,9,"Loner, Mighty Blow, Thick Skull, Bonehead, Throw Teammate",S,G A P M,140000
+Chaos Pact,1,Minotaur,5,5,2,8,"Loner, Frenzy, Horns, Mighty Blow, Thick Skull, Wild Animal",S,G A P M,150000
+Dark Elf,16,Lineelf,6,3,4,8,,G A,S P,70000
+Dark Elf,2,Runner,7,3,4,7,Dump Off,G A P,S,80000
+Dark Elf,2,Assassin,6,3,4,7,"Shadowing, Stab",G A,S P,90000
+Dark Elf,4,Blitzer,7,3,4,8,Block,G A,S P,100000
+Dark Elf,2,Witch Elf,7,3,4,7,"Frenzy, Dodge, Jump Up",G A,S P,110000
+Dwarf,16,Blocker,4,3,2,9,"Block, Tackle, Thick Skull",G S,A P,70000
+Dwarf,2,Runner,6,3,3,8,"Sure Hands, Thick Skull",G P ,A S,80000
+Dwarf,2,Blitzer,5,3,3,9,"Block, Thick Skull",G S,A P,80000
+Dwarf,2,Troll Slayer,5,3,2,8,"Block, Dauntless, Frenzy, Thick Skull",G S,A P,90000
+Dwarf,1,Deathroller,4,7,1,10,"Loner, Break Tackle, Dirty Player, Juggernaut, Mighty Blow, No Hands, Secret Weapon, Stand Firm",S,G A P,160000
+Elf,16,Lineelf,6,3,4,7,,G A,S P,60000
+Elf,2,Thrower,6,3,4,7,Pass,G A P,S,70000
+Elf,4,Catcher,8,3,4,7,"Catch, Nerves of Steel",G A,S P,100000
+Elf,2,Blitzer,7,3,4,8,"Block, Sidestep",G A,S P,110000
+Goblin,16,Goblin,6,2,3,7,"Dodge, Stunty, Right Stuff",A,G S P,40000
+Goblin,1,Bombardier,6,2,3,7,"Bombardier, Dodge, Secret Weapon, Stunty",A,G S P,40000
+Goblin,1,Looney,6,2,3,7,"Chainsaw, Secret Weapon, Stunty",A,G S P,40000
+Goblin,1,Fanatic,3,7,3,7,"Ball & Chain, No Hands, Secret Weapon, Stunty",S,G A P,70000
+Goblin,1,Pogoer,7,2,3,7,"Dodge, Leap, Stunty, Very Long Legs",A,G S P,70000
+Goblin,2,Troll,4,5,1,9,"Loner, Mighty Blow, Regeneration, Really Stupid, Always Hungry, Throw Teammate",S,G A P,110000
+Halfling,16,Halfling,5,2,3,6,"Dodge, Stunty, Right Stuff",A,G S P,30000
+Halfling,2,Treeman,2,6,1,10,"Mighty Blow, Strong Arm, Stand Firm, Thick Skull, Take Root, Throw Teammate",S,G A P,120000
+High Elf,16,Lineelf,6,3,4,8,,G A,S P,70000
+High Elf,2,Thrower,6,3,4,8,"Pass, Safe Throw",G A P,S,90000
+High Elf,4,Catcher,8,3,4,7,Catch,G A,S P,90000
+High Elf,2,Blitzer,7,3,4,8,Block,G A,S P,100000
+Human,16,Lineman,6,3,3,8,,G,A S P,50000
+Human,4,Catcher,8,2,3,7,"Catch, Dodge",G A,S P,70000
+Human,2,Thrower,6,3,3,8,"Pass, Sure Hands",G P ,A S,70000
+Human,4,Blitzer,7,3,3,8,Block,G S,A P,90000
+Human,1,Ogre,5,5,2,9,"Loner, Mighty Blow, Thick Skull, Bonehead, Throw Teammate",S,G A P,140000
+Khemri,16,Skeleton,5,3,2,7,"Regeneration, Thick Skull",G,A S P,40000
+Khemri,2,Thro-Ra,6,3,2,7,"Sure Hands, Pass, Regeneration",G P,A S,70000
+Khemri,2,Blitz-Ra,6,3,2,8,"Block, Regeneration",G S,A P,90000
+Khemri,4,Tomb Guardian,4,5,1,9,"Decay, Regeneration",S,G A P,100000
+Lizardmen,16,Skink,8,2,3,7,"Dodge, Stunty",A,G S P,60000
+Lizardmen,6,Saurus,6,4,1,9,,G S,A P,80000
+Lizardmen,1,Kroxigor,6,5,1,9,"Loner, Mighty Blow, Thick Skull, Prehensile Tail, Bonehead",S,G A P,140000
+Necromantic,16,Zombie,4,3,2,8,Regeneration,G,A S P,40000
+Necromantic,2,Ghoul,7,3,3,7,Dodge,G A,S P,70000
+Necromantic,2,Wight,6,3,3,8,"Block, Regeneration",G S,A P,90000
+Necromantic,2,Flesh Golem,4,4,2,9,"Standfirm, Thick Skull, Regeneration",G S,A P,110000
+Necromantic,2,Werewolf,8,3,3,8,"Frenzy, Claws, Regeneration",G A,S P,120000
+Norse,16,Lineman,6,3,3,7,Block,G,A S P,50000
+Norse,2,Thrower,6,3,3,7,"Block, Pass",G P ,A S,70000
+Norse,2,Runner,7,3,3,7,"Block, Dauntless",G A,S P,90000
+Norse,2,Berserkers,6,3,3,7,"Block, Frenzy, Jump Up",G S,A P,90000
+Norse,2,Ulfwerener,6,4,2,8,Frenzy,G S,A P,110000
+Norse,1,Snow Troll,5,5,1,8,"Loner, Claws, Disturbing Presence, Frenzy, Wild Animal",S,G A P,140000
+Nurgle,16,Rotter,5,3,3,8,"Decay, Nurgle's Rot",G M,A S P,40000
+Nurgle,4,Pestigor,6,3,3,8,"Horns, Nurgle's Rot, Regeneration",G S M,A P,80000
+Nurgle,4,Nurgle Warrior,4,4,2,9,"Disturbing Presence, Foul Appearance, Nurgle's Rot, Regeneration",G S M,A P,110000
+Nurgle,1,Beast of Nurgle,4,5,1,9,"Loner, Disturbing Presence, Foul Appearance, Mighty Blow, Nurgle's Rot, Really Stupid, Regeneration, Tentacles",S,G A P M,140000
+Ogre,16,Snotling,5,1,3,5,"Dodge, Right Stuff, Side Step, Stunty, Titchy",A,G S P,20000
+Ogre,6,Ogre,5,5,2,9,"Mighty Blow, Thick Skull, Bonehead, Throw Teammate",S,G A P,140000
+Orc,16,Lineorc,5,3,3,9,,G,A S P,50000
+Orc,4,Goblin,6,2,3,7,"Dodge, Stunty, Right Stuff",A,G S P,40000
+Orc,2,Thrower,5,3,3,8,"Pass, Sure Hands",G P ,A S,70000
+Orc,4,Black Orc Blocker,4,4,2,9,,G S,A P,80000
+Orc,4,Blitzer,6,3,3,9,Block,G S,A P,80000
+Orc,1,Troll,4,5,1,9,"Loner, Mighty Blow, Regeneration, Really Stupid, Always Hungry, Throw Teammate",S,G A P,110000
+Skaven,16,Linerat,7,3,3,7,,G,A S P M,50000
+Skaven,2,Thrower,7,3,3,7,"Pass, Sure Hands",G P,A S M,70000
+Skaven,4,Gutter Runner,9,2,4,7,Dodge,G A,S P M,80000
+Skaven,2,Blitzer,7,3,3,8,Block,G S,A P M,90000
+Skaven,1,Rat Ogre,6,5,2,8,"Loner, Mighty Blow, Frenzy, Prehensile Tail,Wild Animal",S,G A P M,150000
+Slann,16,Lineman,6,3,3,8,"Leap, Very Long Legs",G,A S P,60000
+Slann,4,Catcher,7,2,4,7,"Diving Catch, Leap, Very Long Legs",G A ,S P,80000
+Slann,4,Blitzer,7,3,3,8,"Diving Tackle, Jump Up, Leap, Very Long Legs",G A S,P,110000
+Slann,1,Kroxigor,6,5,1,9,"Loner, Mighty Blow, Thick Skull, Prehensile Tail, Bonehead",S,G A P,140000
+Undead,16,Skeleton,5,3,2,7,"Regeneration, Thick Skull",G,A S P,40000
+Undead,16,Zombie,4,3,2,8,Regeneration,G,A S P,40000
+Undead,4,Ghoul,7,3,3,7,Dodge,G A,S P,70000
+Undead,2,Wight,6,3,3,8,"Block, Regeneration",G S,A P,90000
+Undead,2,Mummy,3,5,1,9,"Mighty Blow, Regeneration",S,G A P,120000
+Underworld,12,Underworld Goblin,6,2,3,7,"Dodge, Stunty, Right Stuff",A M ,G S P,40000
+Underworld,2,Skaven Lineman,7,3,3,7,Animosity,G M,A S P,50000
+Underworld,2,Skaven Thrower,7,3,3,7,"Animosity, Pass, Sure Hands",G P M,A S,70000
+Underworld,2,Skaven Blitzer,7,3,3,8,"Animosity, Block",G S M,A P,90000
+Underworld,1,Warpstone Troll,4,5,1,9,"Loner, Mighty Blow, Regeneration, Really Stupid, Always Hungry, Throw Teammate",S M ,G A P,110000
+Vampire,16,Thrall,6,3,3,7,,G,A S P,40000
+Vampire,6,Vampire,6,4,4,8,"Blood Blust, Hypnotic Gaze, Regeneration",G A S,P,110000
+Wood Elf,16,Lineelf,7,3,4,7,,G A,S P,70000
+Wood Elf,4,Catcher,8,2,4,7,"Catch, Dodge, Sprint",G A,S P,90000
+Wood Elf,2,Thrower,7,3,4,7,Pass,G A P,S,90000
+Wood Elf,2,Wardancer,8,3,4,7,"Block, Dodge, Leap",G A,S P,120000
+Wood Elf,1,Treeman,2,6,1,10,"Loner, Mighty Blow, Stand Firm, Thick Skull, Strong Arm, Take Root, Throw Teammate",S,G A P,120000

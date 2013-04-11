@@ -1,0 +1,987 @@
+<?php
+
+/*
+ * bbl installation code.
+ * 
+ * Uses the Schema hook to create Database table and then import data into them.
+ * 
+ * Tables created
+ *    bbl_rs_teams
+ *    bbl_rs_players
+ *    bbl_rs_skills
+ *	  bbl_rs_skill_award_levels
+ *    bbl_user_players
+ *	  bbl_user_roster
+ *    bbl_ruleset
+ *    bbl_stat_columns
+ *    bbl_game_results
+ *    bbl_user_player_stats
+ *    bbl_user_player_skills
+
+ *    *starplayers
+ *    *starplayeravailability
+ *    *League settings
+ *    *Season settings
+ */
+
+/**
+ * Implements hook_install().
+ */
+function bbl_install() {
+  variable_set('current_ruleset_id',0);
+  $bblpath = $_SERVER['DOCUMENT_ROOT'] . base_path() . drupal_get_path('module', 'bbl') . '/';
+  
+  // add the default ruleset row to the bbl_ruleset table.
+  $target_table = 'bbl_ruleset';
+  $rows = array(
+    'ruleset_name' => 'LRB6', 
+    'creator' => $GLOBALS['user']->uid, 
+    'created' => $_SERVER['REQUEST_TIME'],
+  );
+  $rid = db_insert($target_table)->fields($rows)->execute();
+  drupal_set_message(t('@ruleset added to @target_table', array('@ruleset' => $rows['ruleset_name'], '@target_table' => $target_table)));
+  
+  $target_table = 'bbl_rs_skills';
+  $source_file = $bblpath . 'Skills.csv';
+  $max_line_length = 1000;
+  $count = csv_file_to_mysql_table($source_file, $target_table, $max_line_length);
+  drupal_set_message(t('@count lines added to @target_table', array('@count' => $count, '@target_table' => $target_table)));
+  
+  $target_table = 'bbl_rs_teams';
+  $source_file = $bblpath . 'Teams.csv';
+  $count = csv_file_to_mysql_table($source_file, $target_table, $max_line_length);
+  drupal_set_message(t('@count lines added to @target_table', array('@count' => $count, '@target_table' => $target_table)));
+  
+  // VERIFY apoth data added to team table
+  $noApoth = array('Khemri','Undead','Necromantic','Nurgle');
+  
+  $target_table = 'bbl_rs_players';
+  $source_file = $bblpath . 'Players.csv';
+  $count = csv_file_to_mysql_table($source_file, $target_table, $max_line_length);
+  drupal_set_message(t('@count lines added to @target_table', array('@count' => $count, '@target_table' => $target_table)));
+  
+  // Add tid value to each player matched from the available teams
+  $query = db_select('bbl_rs_teams', 't');
+  $query->fields('t', array('tid','teamname'))->orderBy('teamname');
+  $result = $query->execute();
+  // Return the results as objects
+  $teams = $result->fetchAll();
+  
+  foreach ($teams as $team) {
+    $num_updated = db_update('bbl_rs_players')
+      ->fields(array('tid' => $team->tid,))
+      ->condition ('Race', $team->teamname, '=')
+      ->execute();
+    drupal_set_message(t('  @num players updated in @team', array('@num' => $num_updated, '@team' => $team->teamname)));
+  }
+  
+  // import the default statistics columns for LRB6
+  $target_table = 'bbl_stat_columns';
+  $source_file = $bblpath . 'stats.csv';
+  $count = csv_file_to_mysql_table($source_file, $target_table, $max_line_length);
+  drupal_set_message(t('@count lines added to @target_table', array('@count' => $count, '@target_table' => $target_table)));
+  
+  // Populate player_column fields
+  $query = db_select('bbl_stat_columns', 'sc');
+  $query->fields('sc', array('scid'))->orderBy('scid');
+  $result = $query->execute();
+  // Return the results as objects
+  $stat_cols = $result->fetchAll();
+  // Now add tid value to each player matched from the available teams
+  foreach ($stat_cols as $col) {
+    $num_updated = db_update('bbl_stat_columns')
+      ->fields(array('player_column' => 'pstat0' . $col->scid))
+      ->condition ('scid', $col->scid, '=')
+      ->execute();
+  }
+  
+  $target_table =  'bbl_rs_skill_award_levels';
+  $source_file = $bblpath . 'skill_levels.csv';
+  $count = csv_file_to_mysql_table($source_file, $target_table, $max_line_length);
+  drupal_set_message(t('@count lines added to @target_table', array('@count' => $count, '@target_table' => $target_table)));
+  
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function bbl_uninstall() {
+  db_drop_table('bbl_rs_skills');
+  db_drop_table('bbl_rs_teams');
+  db_drop_table('bbl_rs_players');
+  db_drop_table('bbl_user_players');
+  db_drop_table('bbl_user_roster');
+  db_drop_table('bbl_ruleset');
+  db_drop_table('bbl_stat_columns');
+  db_drop_table('bbl_game_results');
+  db_drop_table('bbl_user_player_stats');
+  db_drop_table('bbl_rs_skill_award_levels');
+  db_drop_table('bbl_user_player_skills');
+  
+}
+
+/**
+ * Implements hook_schema().
+ */
+function bbl_schema() {
+  $schema['bbl_rs_skills'] = array(
+    'description' => 'Stores players skills and categories.',
+    'fields' => array(
+      'sid'     => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_id'     => array(
+        'description' => 'ID of rule set',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),        
+      'skill'    => array(
+        'description' => 'Name of the skill',
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+      ),
+      'category'    => array(
+        'description' => 'Category of skill',
+        'type' => 'varchar',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+
+  $schema['bbl_rs_teams'] = array(
+    'description' => 'Stores available teams and reroll costs.',
+    'fields' => array(
+      'tid'     => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_id'     => array(
+        'description' => 'ID of rule set',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'race_id'     => array(
+        'description' => 'node ID for this race fluff within',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'teamname'    => array(
+        'description' => 'Name of the team',
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+      ),
+      'reroll'    => array(
+        'description' => 'Cost of rerolls',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+	    'allowapothecary' => array(
+        'description' => 'Apothecary allowed',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('tid'),
+  );
+  //bbl_rs_teams
+  
+  //race,max,position,ma,st,ag,av,skills,norm,dble,cost
+  $schema['bbl_rs_players'] = array(
+    'description' => 'Stores all default player data.',
+    'fields' => array(
+      'dpid'     => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_id'     => array(
+        'description' => 'ID of rule set',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'race'    => array(
+        'description' => 'Race that player belongs to. Legacy from import',
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+      ),
+      'tid'    => array(
+        'description' => 'Team id that player belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'max'    => array(
+        'description' => 'Maximium of this position allowed',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'position'    => array(
+        'description' => 'Position occupied by player.',
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+      ),
+      'ma'    => array(
+        'description' => 'Movement',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'st'    => array(
+        'description' => 'Strength',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'ag'    => array(
+        'description' => 'Agility',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'av'    => array(
+        'description' => 'Armour',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'skills'    => array(
+        'description' => 'Base skill of this player.',
+        'type' => 'varchar',
+        'length' => 200,
+        'not null' => TRUE,
+      ),
+      'norm'    => array(
+        'description' => 'Normal skills available.',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'dble'    => array(
+        'description' => 'Double skills available.',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'cost'    => array(
+        'description' => 'players cost',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('dpid'),
+  );
+  //bbl_rs_players
+  $schema['bbl_user_players'] = array(
+    'description' => 'Stores all team player stats.',
+    'fields' => array(
+      'tpid'     => array(
+        'description' => 'unique id for this player',
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'teamid' => array(
+        'description' => 'ID of owning team',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+	  'player_nid' => array(
+        'description' => 'ID of player_node for this player.',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'playertype' => array(
+        'description' => 'ID of player type from Players table',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'playername' => array(
+        'description' => 'Player name',
+        'type' => 'varchar',
+        'length' => 60,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'playerstate' => array(
+        'description' => 'Current player state: 0 Active, 1 Dead, 2 MNG, 3 Retired',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'weight' => array(
+        'description' => 'players position within roster',
+        'type' => 'int',     
+        'not null' => TRUE,
+      ),
+      'playernumber' => array(
+        'description' => 'Players number in case non standard numbers ever added',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'spp' => array(
+        'description' => 'Star Player Points',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'skill1' => array(
+        'description' => 'Player Skill 1',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'skill2' => array(
+        'description' => 'Player Skill 2',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'skill3' => array(
+        'description' => 'Player Skill 3',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'skill4' => array(
+        'description' => 'Player Skill 4',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'skill5' => array(
+        'description' => 'Player Skill 5',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'skill6' => array(
+        'description' => 'Player Skill 6',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'injury1' => array(
+        'description' => 'Player Injury 1',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'injury2' => array(
+        'description' => 'Player Injury 2',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'injury3' => array(
+        'description' => 'Player Injury 3',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'pstat01' => array(
+        'description' => 'Player Stat 1',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat02' => array(
+        'description' => 'Player Stat 2',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat03' => array(
+        'description' => 'Player Stat 3',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat04' => array(
+        'description' => 'Player Stat 4',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat05' => array(
+        'description' => 'Player Stat 5',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat06' => array(
+        'description' => 'Player Stat 6',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat07' => array(
+        'description' => 'Player Stat 7',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat08' => array(
+        'description' => 'Player Stat 8',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat09' => array(
+        'description' => 'Player Stat 9',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat10' => array(
+        'description' => 'Player Stat 10',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat11' => array(
+        'description' => 'Player Stat 11',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat12' => array(
+        'description' => 'Player Stat 12',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat13' => array(
+        'description' => 'Player Stat 13',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat14' => array(
+        'description' => 'Player Stat 14',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat15' => array(
+        'description' => 'Player Stat 15',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat16' => array(
+        'description' => 'Player Stat 16',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat17' => array(
+        'description' => 'Player Stat 17',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat18' => array(
+        'description' => 'Player Stat 18',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat19' => array(
+        'description' => 'Player Stat 19',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pstat20' => array(
+        'description' => 'Player Stat 20',
+        'type' => 'int',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('tpid'),
+  );
+  //bbl_user_players
+  $schema['bbl_user_roster'] = array(
+    'description' => 'Stores team data.',
+    'fields' => array(
+      'team_id'     => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'teamname' => array(
+        'description' => 'Team name given by owner',
+        'type' => 'varchar',
+        'length' => 60,
+        'not null' => TRUE,
+      ),
+      'tid'     => array(
+        'description' => 'ID of team type from the Teams table',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'team_node_id'     => array(
+        'description' => 'ID of team_node for this  team.',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'owner' => array(
+        'description' => 'User ID of creating user',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rerolls' => array(
+        'description' => 'Number of rerolls bought by team',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cheerleaders' => array(
+        'description' => 'Number of cheerleaders bought by team',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'assistantcoaches' => array(
+        'description' => 'Number of assistant coaches bought by team',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'apothecary' => array(
+        'description' => 'Does team have an apothecary, int used in case of changes',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'fanfactor' => array(
+        'description' => 'Fanfactor bought and/or earned by team',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'treasury' => array(
+        'description' => 'Remaining gold in team treasury',
+        'type' => 'int', 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('team_id'),
+  );
+  //bbl_user_roster
+  $schema['bbl_ruleset'] = array(
+    'description' => 'Stores ruleset names.',
+    'fields' => array(
+      'ruleset_id' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_name' => array(
+        'description' => 'ruleset name given by league commissioner',
+        'type' => 'varchar',
+        'length' => 60,
+        'not null' => TRUE,
+      ),
+	   'ruleset_nid'     => array(
+        'description' => 'ID of ruleset_node for this ruleset.',
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'creator' => array(
+        'description' => 'user id of ruleset creator(league commissioner)',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the ruleset was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('ruleset_id'),
+  );
+  //bbl_ruleset
+  $schema['bbl_rs_skill_award_levels'] = array(
+    'description' => 'Levels at which skills are awarded',
+    'fields' => array(
+      'slid' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_id' => array(
+        'description' => 'ruleset id for these',
+        'type' => 'int',
+        'not null' => TRUE,
+		    'default' => 0,
+      ),
+      'spp_level' => array(
+        'description' => 'need to equal or exceed this level to receive skill',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+	  'spp_max' => array(
+        'description' => 'need to be less than or equal to this level to receive skill. Auto calculate.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'number_of_skills' => array(
+        'description' => 'number of skill player should have at this spp level',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+	  'title' => array(
+        'description' => 'name of skill level',
+        'type' => 'varchar',
+		'length' => 20,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('slid'),
+  ); 
+  //bbl_rs_skill_award_levels  
+  $schema['bbl_stat_columns'] = array(
+    'description' => 'Stores player stat column names.',
+    'fields' => array(
+      'scid' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ruleset_id' => array(
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'stat_name' => array(
+        'type' => 'varchar',
+        'description' => 'Name of the statistic we are tracking',
+        'length' => 40,
+        'not null' => TRUE,
+      ),
+      'short_name' => array(
+        'type' => 'varchar',
+        'description' => 'Short code for the statistic we are tracking',
+        'length' => 5,
+        'not null' => TRUE,
+      ),
+      'spp_value' => array(
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'player_column' => array(
+        'type' => 'varchar',
+        'description' => 'column name in the user_player table which this stat applies to.',
+        'length' => 7,
+        'not null' => TRUE,
+        'default' => '',
+      )
+    ),
+    'primary key' => array('scid'),
+  );
+  //bbl_stat_columns
+  $schema['bbl_game_results'] = array(
+	'description' => 'record game results',
+	'fields' => array(
+	  'grid' => array(
+		'type' => 'serial',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+	  ),
+	  'gamedate' => array(
+		'type' => 'int',
+		'length' => 11,
+        'default' => 0,
+	  ),
+	  'game_nid' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'home_teamid' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'away_teamid' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'home_score' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'away_score' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'home_cas' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'away_cas' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'home_gate' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'away_gate' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'home_winnings' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'away_winnings' => array(
+		'type' => 'int',
+		'unsigned' => TRUE,
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	),
+	'primary key' => array('grid'),
+  );
+  //bbl_game_results
+  $schema['bbl_user_player_stats'] = array(
+    'description' => 'Stores player stat column names.',
+    'fields' => array(
+      'psid' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'ps_scid' => array(
+        'type' => 'int',
+		'description' => 'ID value of the stat column in bbl_stat_columns',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+	  'ps_tpid' => array(
+        'type' => 'int',
+		'description' => 'ID of the player awarded the stat',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'stat_award' => array(
+        'type' => 'int',
+        'description' => 'Number stat awarded',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'spp_award' => array(
+        'type' => 'int', 
+		'description' => 'SPP awarded in total. Used in case stat spp value changes.',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'award_date' => array(
+        'type' => 'int',
+        'description' => 'When the spp was awarded',
+        'length' => 11,
+        'default' => 0,
+      ),
+	  'award_uid' => array(
+		'type' => 'int',
+		'description' => 'user who awarded spp',
+		'not null' => TRUE,
+		'default' => 0,
+	  ),
+	  'game_id' => array(
+		'type' => 'int',
+		'description' => 'ID of game were spp awarded if available',
+		'not null' => FALSE,
+	  ),
+	  'award_comment' => array(
+		'type' => 'varchar',
+		'description' => 'award comment',
+		'length' => 60,
+        'not null' => TRUE,
+        'default' => '',
+	  ),
+    ),
+    'primary key' => array('psid'),
+  );
+  //bbl_user_player_stats
+    $schema['bbl_user_player_skills'] = array(
+    'description' => 'Stores player skills received',
+    'fields' => array(
+      'skid' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'tpid' => array(
+        'type' => 'int',
+		'description' => 'ID value of the user player',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sid' => array(
+        'type' => 'int',
+        'description' => 'skill ID from bbl_rs_skills',
+		'unsigned' => TRUE, 
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'assigned_date' => array(
+        'type' => 'int',
+        'description' => 'When the spp was awarded',
+        'length' => 11,
+        'default' => 0,
+      ),
+	  'assigned_uid' => array(
+		'type' => 'int',
+		'description' => 'user who awarded spp',
+		//'not null' => TRUE,
+		'default' => 0,
+	  ),
+	    'skill_value' => array(
+	    'type' => 'int',
+		  'description' => 'gold value of this skill for this player',
+		  'not null' => TRUE,
+		  'unsigned' => TRUE,
+		  'default' => 20000,
+	  ),
+	    'skill_type' => array(
+		  'type' => 'varchar',
+		  'description' => 'norm, dble, statup, injury',
+		  'length' => 10,
+      //'not null' => TRUE,
+      'default' => '',
+	  ),
+	    'award_comment' => array(
+		  'type' => 'varchar',
+		  'description' => 'award comment',
+		  'length' => 60,
+      'not null' => TRUE,
+      'default' => '',
+	  ),
+    ),
+    'primary key' => array('skid'),
+  );
+  //bbl_user_player_skills
+  return $schema;
+}
+
+/*
+ * Modified code example to work with drupal 7 database code.
+ * 
+ */
+function csv_file_to_mysql_table($source_file, $target_table, $max_line_length=10000) {
+	$row_count = 0;
+    if (($handle = fopen("$source_file", "r")) !== FALSE) {
+        $columns = fgetcsv($handle, $max_line_length, ",");
+        foreach ($columns as &$column) {
+            $column = str_replace(".","",$column);
+        }
+        
+        while (($data = fgetcsv($handle, $max_line_length, ",")) !== FALSE) {
+            while (count($data)<count($columns))
+                array_push($data, NULL);  // pads out the array with null to ensure array correct length
+            
+            $i = 0;
+            foreach ($columns as &$column) {
+              $row[$column] = $data[$i++];
+            }
+            
+          if (db_table_exists($target_table)) {
+            db_insert($target_table)->fields($row)->execute();
+          }
+		  $row_count++;
+        }
+        fclose($handle);
+    }
+	return $row_count;
+}
